@@ -51,6 +51,8 @@ func loadShutterSoundPlayer() -> AVAudioPlayer?
 
 //-------------------------------------------------------------------------------------------------------
 
+
+
 class ViewController:
   UIViewController,
   CroppableImageViewDelegateProtocol,
@@ -58,20 +60,29 @@ class ViewController:
   UINavigationControllerDelegate,
   UIPopoverControllerDelegate, G8TesseractDelegate
 {
+    
+    let currObj = Currency();
   @IBOutlet weak var whiteView: UIView!
   @IBOutlet weak var cropButton: UIButton!
   @IBOutlet weak var cropView: CroppableImageView!
     @IBOutlet weak var result: UILabel!
+    @IBOutlet weak var resultOutlet: UILabel!
+
     
-  var shutterSoundPlayer = loadShutterSoundPlayer()
+    var shutterSoundPlayer = loadShutterSoundPlayer()
   
   override func viewDidAppear(_ animated: Bool) {
-    let status = PHPhotoLibrary.authorizationStatus()
-    if status != .authorized {
-      PHPhotoLibrary.requestAuthorization() {
-        status in
-      }
-    }
+//    let status = PHPhotoLibrary.authorizationStatus()
+//    if status != .authorized {
+//      PHPhotoLibrary.requestAuthorization() {
+//        status in
+//      }
+//    }
+    print("appearing... \(Currency.sharedCurr.currHomeCode) \(Currency.sharedCurr.currGuestCode)")
+    
+    result.text = "\(Currency.sharedCurr.currHomeCode): \(Currency.sharedCurr.storedHome)"
+    resultOutlet.text = "\(Currency.sharedCurr.currGuestCode): \(Currency.sharedCurr.storedGuest)"
+    
   }
 override func viewDidLoad()
 {
@@ -259,8 +270,10 @@ override func viewDidLoad()
   }
   
   
-  @IBAction func handleCropButton(_ sender: UIButton)
+    
+    @IBAction func handleCropButton(_ sender: UIButton)
   {
+    let sharedModel = Currency.sharedCurr;
 //    var aFloat: Float
 //    aFloat = (sender.currentTitle! as NSString).floatValue
     //println("Button title = \(buttonTitle)")
@@ -280,7 +293,34 @@ override func viewDidLoad()
             
             tesseract.recognize()
             // print result
-            self.result.text = "Tesseract: \((tesseract.recognizedText) ?? "Error, check console output")"
+
+            var filteredMessage : String = tesseract.recognizedText ?? "WRONG"
+            var len = 0;
+            while(filteredMessage[len] != ".") {
+                if(len==filteredMessage.count) {
+                    break;
+                }
+                len += 1
+            }
+            filteredMessage = String(filteredMessage.prefix(len+3));
+            print("working:.. \(filteredMessage)")
+
+            let sourcePrice = Double(filteredMessage)
+            
+            self.result.text = "\(Currency.sharedCurr.currHomeCode): \((filteredMessage) ?? "Error, check console output")"
+            
+//            print("rates size: \(self.currObj.rates?.count)")
+//            print("homecODE \(Currency.sharedCurr.currHomeCode)");
+//            print("GUESTcODE \(Currency.sharedCurr.currGuestCode)");
+            let firstVal = self.currObj.rates?[Currency.sharedCurr.currHomeCode];
+            let secondVal = self.currObj.rates?[Currency.sharedCurr.currGuestCode];
+            
+            let result = sourcePrice! * secondVal!/firstVal!
+            self.resultOutlet.text = "\(Currency.sharedCurr.currGuestCode): \(result)"
+            
+            Currency.sharedCurr.storedGuest = "\(result)";
+            Currency.sharedCurr.storedHome = filteredMessage;
+            
           // self.saveImageToCameraRoll(croppedImage)
           //UIImageWriteToSavedPhotosAlbum(croppedImage, nil, nil, nil);
           
@@ -310,6 +350,8 @@ override func viewDidLoad()
       }
       */
     }
+    
+    
   }
 
   //-------------------------------------------------------------------------------------------------------
@@ -330,6 +372,8 @@ func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMe
     {
         picker.dismiss(animated: true, completion: nil)
         cropView.imageToCrop = image
+        result.text = "\(Currency.sharedCurr.currHomeCode):"
+        resultOutlet.text = "\(Currency.sharedCurr.currGuestCode):"
     }
 }
   
@@ -342,3 +386,14 @@ func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMe
   }
 }
 
+extension String {
+    subscript(index: Int) -> Character {
+        get {
+            return self[self.index(startIndex, offsetBy: index)]
+        }
+        set {
+            let i = self.index(startIndex, offsetBy: index)
+            self.replaceSubrange(i...i, with: String(newValue))
+        }
+    }
+}

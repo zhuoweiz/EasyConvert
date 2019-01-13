@@ -37,7 +37,7 @@ class CameraViewController: UIViewController {
     }
     
     @IBAction func takePictureAction(_ sender: UIButton) {
-        cameraView.image = getImage()
+        
     }
 }
 

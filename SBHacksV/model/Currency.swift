@@ -1,4 +1,4 @@
-//
+
 //  Currency.swift
 //  OCRCurrencyConverter
 //
@@ -15,6 +15,23 @@ protocol CurrencyDelegate: class {
 }
 
 class Currency {
+    
+    public static let sharedCurr = Currency()
+    
+    public var storedHome: String = "";
+    public var storedGuest: String = "";
+    
+    public var changed: Bool = false;
+    public var isHome :Bool = true;
+    public var currHomeCode: String = "USD";
+    public var currGuestCode: String = "CNY";
+    
+    func updateCurrCode(isH: Bool, currC: String, currGC: String) {
+        isHome = isH;
+        currHomeCode = currC;
+        currGuestCode = currGC;
+    }
+    
     
     var rates: Rate? // [<Currency Code> : <1 USD Value>]
     var names: [String: String] {
@@ -70,8 +87,16 @@ class Currency {
         }
     }
     
+    func convert(from: String, to: String, value: Double) -> Double {
+        let fromValue = rates![from]!
+        let toValue = rates![to]!
+        let ratio = toValue / fromValue
+        return ratio * value
+    }
+    
     func update() {
         let haveSavedRates = rates != nil
+        getRates()
         if rates != nil {
             updateDate = Date()
             save()
@@ -94,6 +119,7 @@ class Currency {
             guard let data = json.data(using: .utf8, allowLossyConversion: false) else { return }
             guard let jsonObject = try? JSONSerialization.jsonObject(with: data, options: []) else { return }
             guard let result = jsonObject as? [String: Any] else { return }
+            print(result)
             self.rates = (result["rates"] as! Rate)
             self.rates?["USD"] = 1.0
             //            print(self.rates ?? "Failed")

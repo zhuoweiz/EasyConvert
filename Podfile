@@ -10,5 +10,6 @@ target 'SBHacksV' do
   pod 'TesseractOCRiOS'
   pod 'Anchors'
   pod 'SwiftOCR'
+  pod 'Firebase/Core'
   
 end
